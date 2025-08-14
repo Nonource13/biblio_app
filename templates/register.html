@@ -1,0 +1,45 @@
+<!-- templates/register.html -->
+{% extends 'base.html' %}
+{% block title %}Inscription Membre{% endblock %}
+{% block content %}
+  <h2>Inscription Nouveau Membre</h2>
+  <p>Créez votre compte et choisissez votre formule d'abonnement.</p>
+
+  <form method="POST" action="{{ url_for('register') }}">
+    <div class="mb-3">
+      <label for="username" class="form-label">Nom d'utilisateur</label>
+      <input type="text" class="form-control" id="username" name="username" required minlength="3">
+    </div>
+     <div class="mb-3">
+      <label for="email" class="form-label">Adresse Email (Optionnel)</label>
+      <input type="email" class="form-control" id="email" name="email">
+    </div>
+    <div class="row">
+      <div class="col-md-6 mb-3">
+        <label for="password" class="form-label">Mot de passe</label>
+        <input type="password" class="form-control" id="password" name="password" required minlength="6">
+      </div>
+      <div class="col-md-6 mb-3">
+        <label for="confirm_password" class="form-label">Confirmer Mot de passe</label>
+        <input type="password" class="form-control" id="confirm_password" name="confirm_password" required>
+      </div>
+    </div>
+
+    <hr>
+    <h5 class="mb-3">Choisissez votre Abonnement (Simulation)</h5>
+     <div class="form-check mb-2">
+      <input class="form-check-input" type="radio" name="subscription_type" id="sub_monthly" value="monthly" required checked>
+      <label class="form-check-label" for="sub_monthly">
+        Abonnement Mensuel (Simulé: 5€ / mois)
+      </label>
+    </div>
+    <div class="form-check mb-3">
+      <input class="form-check-input" type="radio" name="subscription_type" id="sub_annual" value="annual" required>
+      <label class="form-check-label" for="sub_annual">
+        Abonnement Annuel (Simulé: 50€ / an - 2 mois offerts!)
+      </label>
+    </div>
+
+    <button type="submit" class="btn btn-primary">S'inscrire et Procéder au Paiement (Simulé)</button>
+  </form>
+{% endblock %}

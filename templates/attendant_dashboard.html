@@ -1,0 +1,48 @@
+{% extends 'base.html' %}
+{% block title %}Tableau de Bord Préposé{% endblock %}
+{% block content %}
+  <h1>Tableau de Bord Préposé</h1>
+  <p>Bienvenue, {{ session.get('username', 'Préposé') }} !</p>
+  <div class="row">
+    {# Section Enregistrer Prêt #}
+    <div class="col-md-6">
+      <div class="card mt-4">
+        <div class="card-header">
+          Enregistrer un Prêt (Simulation)
+        </div>
+        <div class="card-body">
+          <form method="POST" action="{{ url_for('record_loan') }}">
+            <div class="mb-3">
+              <label for="memberIdLoan" class="form-label">ID Membre (Scan simulé)</label>
+              <input type="text" class="form-control" id="memberIdLoan" name="member_id" placeholder="ex: MBR001" required>
+            </div>
+            <div class="mb-3">
+              <label for="docIdLoan" class="form-label">ID Document (Scan simulé)</label>
+              <input type="text" class="form-control" id="docIdLoan" name="document_id" placeholder="ex: DOC042" required>
+            </div>
+            <button type="submit" class="btn btn-success">Enregistrer Prêt</button>
+          </form>
+        </div>
+      </div>
+    </div>
+
+    {# Section Enregistrer Retour #}
+    <div class="col-md-6">
+      <div class="card mt-4">
+        <div class="card-header">
+          Enregistrer un Retour (Simulation)
+        </div>
+        <div class="card-body">
+          <form method="POST" action="{{ url_for('record_return') }}">
+            <div class="mb-3">
+              <label for="docIdReturn" class="form-label">ID Document (Scan simulé)</label>
+              <input type="text" class="form-control" id="docIdReturn" name="document_id" placeholder="ex: DOC042" required>
+            </div>
+            <button type="submit" class="btn btn-warning">Enregistrer Retour</button>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+  {# Liens vers prêt/retour, etc. viendront ici #}
+{% endblock %}

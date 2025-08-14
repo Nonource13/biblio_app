@@ -1,0 +1,124 @@
+<!-- templates/edit_document.html (Version Complète avec Statut Physique) -->
+{% extends 'base.html' %}
+{% block title %}Modifier Document - {{ doc.title }}{% endblock %}
+{% block content %}
+  <h1>Modifier le Document</h1>
+  <p>Modification de : <strong>{{ doc.title }}</strong> (ID: {{ doc.id }})</p>
+
+  <div class="card mt-4">
+    <div class="card-header">
+      Informations du Document
+    </div>
+    <div class="card-body">
+      {# Formulaire pointe vers la même route mais en POST #}
+      <form method="POST" action="{{ url_for('edit_document', doc_id=doc.id) }}" enctype="multipart/form-data">
+        {# --- Champs texte pré-remplis --- #}
+        <div class="mb-3">
+          <label for="title" class="form-label">Titre</label>
+          <input type="text" class="form-control" id="title" name="title" value="{{ doc.title }}" required>
+        </div>
+        <div class="mb-3">
+          <label for="author" class="form-label">Auteur</label>
+          <input type="text" class="form-control" id="author" name="author" value="{{ doc.author or '' }}">
+        </div>
+        <div class="mb-3">
+          <label for="summary" class="form-label">Résumé</label>
+          <textarea class="form-control" id="summary" name="summary" rows="3">{{ doc.summary or '' }}</textarea>
+        </div>
+
+        {# === SECTION Statut Physique (Ajoutée ici) === #}
+        {% if doc.is_physical %} {# Afficher seulement si c'est un document physique #}
+        <div class="mb-3">
+            <label for="status" class="form-label">Statut Physique</label>
+            <select class="form-select" id="status" name="status">
+                {# Pré-sélectionne le statut actuel #}
+                <option value="disponible" {% if doc.status == 'disponible' %}selected{% endif %}>Disponible</option>
+                <option value="emprunte" {% if doc.status == 'emprunte' %}selected{% endif %}>Emprunté</option>
+                {# Ajoutez d'autres statuts physiques si nécessaire #}
+            </select>
+             <div class="form-text text-warning">
+                Attention : Modifier manuellement ce statut peut créer des incohérences.
+            </div>
+        </div>
+        {% endif %}
+        {# === FIN SECTION Statut Physique === #}
+
+        {# --- Choix des formats pré-cochés --- #}
+        <div class="row mb-3">
+          <label class="form-label col-12">Formats Disponibles :</label>
+          <div class="col-md-6">
+             <div class="form-check mb-2">
+              <input class="form-check-input" type="checkbox" value="y" id="is_physical" name="is_physical" {% if doc.is_physical %}checked{% endif %} onchange="toggleStatusAndFilePath()"> {# Appel fonction JS modifiée #}
+              <label class="form-check-label" for="is_physical">Version Physique</label>
+            </div>
+             <div class="form-check">
+              <input class="form-check-input" type="checkbox" value="y" id="is_digital" name="is_digital" {% if doc.is_digital %}checked{% endif %} onchange="toggleStatusAndFilePath()"> {# Appel fonction JS modifiée #}
+              <label class="form-check-label" for="is_digital">Version Numérique (PDF)</label>
+            </div>
+          </div>
+          {# --- Champ Nom Fichier PDF (pré-rempli et conditionnel) --- #}
+          <div class="col-md-6" id="file-path-group" {% if not doc.is_digital %}style="display: none;"{% endif %}>
+            <label for="file_path" class="form-label">Nom du Fichier PDF</label>
+            <input type="text" class="form-control" id="file_path" name="file_path" value="{{ doc.file_path or '' }}">
+            <div class="form-text">Nom fichier exact (ex: mon_livre.pdf) dans uploads/pdfs. Requis si Numérique coché.</div>
+          </div>
+        </div>
+
+        {# --- Gestion Image Couverture --- #}
+        <div class="mb-3">
+            <label for="cover_image" class="form-label">Modifier l'Image de Couverture (Optionnel)</label>
+            <input class="form-control" type="file" id="cover_image" name="cover_image" accept="image/*">
+            <div class="form-text">Laissez vide pour conserver l'image actuelle. Formats: png, jpg, jpeg, gif, webp.</div>
+        </div>
+        {# Affichage de l'image actuelle (si elle existe) #}
+        {% if doc.cover_image_filename %}
+            <div class="mb-3">
+                <label class="form-label d-block">Image Actuelle :</label>
+                <img src="{{ url_for('static', filename='uploads/covers/' + doc.cover_image_filename) }}" alt="Couverture actuelle" style="max-height: 100px; border: 1px solid #ccc; padding: 2px;">
+                <div class="form-check mt-2">
+                    <input class="form-check-input" type="checkbox" value="y" id="remove_cover" name="remove_cover">
+                    <label class="form-check-label text-danger" for="remove_cover">Supprimer l'image actuelle</label>
+                </div>
+            </div>
+        {% endif %}
+        {# --- FIN Gestion Image --- #}
+
+        <a href="{{ url_for('catalogue') }}" class="btn btn-secondary">Annuler</a>
+        <button type="submit" class="btn btn-success">Enregistrer les Modifications</button>
+      </form>
+    </div> {# Fin card-body #}
+  </div> {# Fin card #}
+
+  {# Script JS pour afficher/cacher les champs conditionnels #}
+  <script>
+    function toggleStatusAndFilePath() {
+      const isPhysicalCheckbox = document.getElementById('is_physical');
+      const isDigitalCheckbox = document.getElementById('is_digital');
+      const filePathGroup = document.getElementById('file-path-group');
+      const filePathInput = document.getElementById('file_path');
+      // Trouver le div parent du select status pour le cacher/afficher
+      const statusSelectGroup = document.getElementById('status')?.closest('.mb-3'); // Cherche le select puis remonte au parent
+
+      // Gérer l'affichage du champ PDF Path
+      if (isDigitalCheckbox.checked) {
+        filePathGroup.style.display = 'block';
+        filePathInput.required = true;
+      } else {
+        filePathGroup.style.display = 'none';
+        filePathInput.required = false;
+      }
+
+      // Gérer l'affichage du champ Statut Physique
+      if (statusSelectGroup) { // Vérifier si l'élément existe (il n'existe que si doc.is_physical était vrai au chargement)
+          if (isPhysicalCheckbox.checked) {
+              statusSelectGroup.style.display = 'block';
+          } else {
+              statusSelectGroup.style.display = 'none';
+          }
+      }
+    }
+    // Appeler au chargement pour l'état initial des deux champs
+    document.addEventListener('DOMContentLoaded', toggleStatusAndFilePath);
+  </script>
+
+{% endblock %}

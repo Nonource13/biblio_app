@@ -1,0 +1,95 @@
+<!-- templates/catalogue.html (Version avec boutons Modifier/Supprimer) -->
+{% extends 'base.html' %}
+
+{% block title %}Catalogue - BiblioTech IA{% endblock %}
+
+{% block content %}
+  <h1>Catalogue des Documents</h1>
+
+  {# === BARRE DE RECHERCHE FONCTIONNELLE === #}
+  <form method="GET" action="{{ url_for('catalogue') }}" class="mb-4">
+    <div class="input-group">
+      <input type="text" class="form-control" placeholder="Rechercher par titre ou auteur..." name="q" value="{{ request.args.get('q', '') }}">
+      <button class="btn btn-outline-secondary" type="submit">Rechercher</button>
+      {% if request.args.get('q') %}
+       <a href="{{ url_for('catalogue') }}" class="btn btn-outline-danger" type="button" title="Effacer la recherche">X</a> {# Remplacé par X pour + compact #}
+      {% endif %}
+    </div>
+  </form>
+  {# === FIN BARRE DE RECHERCHE === #}
+
+  {# Afficher un message si une recherche a été effectuée #}
+  {% if request.args.get('q') %}
+    <p>Résultats pour la recherche : <strong>"{{ request.args.get('q') }}"</strong></p>
+  {% endif %}
+
+  <div class="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-4"> {# Ajusté le nombre de colonnes #}
+    {# Boucle sur les documents (filtrés ou non) #}
+    {% for doc in documents %}
+      <div class="col">
+        <div class="card h-100 shadow-sm"> {# Ajout ombre légère #}
+          {# --- Affichage Image --- #}
+          {% if doc.cover_image_filename %}
+            <a href="{{ url_for('document_detail', doc_id=doc.id) }}"> {# Image cliquable vers détail #}
+              <img src="{{ url_for('static', filename='uploads/covers/' + doc.cover_image_filename) }}" class="card-img-top" alt="Couverture de {{ doc.title }}" style="height: 250px; object-fit: cover;"> {# Hauteur + object-fit #}
+            </a>
+          {% else %}
+             <a href="{{ url_for('document_detail', doc_id=doc.id) }}">
+               <img src="{{ url_for('static', filename='images/placeholder_cover.png') }}" class="card-img-top" alt="Pas de couverture" style="height: 250px; object-fit: contain; opacity: 0.5;"> {# Placeholder #}
+             </a>
+          {% endif %}
+          {# --- Fin Affichage Image --- #}
+
+          <div class="card-body d-flex flex-column"> {# Utilisation flex pour aligner bouton en bas #}
+            <h5 class="card-title">{{ doc.title }}</h5>
+            <p class="card-text mb-2"><small class="text-muted">par {{ doc.author if doc.author else 'Auteur inconnu' }}</small></p> {# Moins de marge basse #}
+            {# Afficher les formats dispo #}
+            <p class="card-text">
+               {% if doc.is_physical %}<span class="badge bg-secondary me-1">Physique</span>{% endif %}
+               {% if doc.is_digital %}<span class="badge bg-primary">Numérique</span>{% endif %}
+            </p>
+            {# Boutons Voir Détails + Admin #}
+            <div class="mt-auto"> {# Garder en bas #}
+                <a href="{{ url_for('document_detail', doc_id=doc.id) }}" class="btn btn-primary btn-sm">Voir Détails</a>
+
+                {# === BOUTONS ADMIN (BIBLIOTHÉCAIRE) === #}
+                {% if session.get('user_role') == 'bibliothecaire' %}
+                  {# Groupe de boutons pour admin, avec petit espace au dessus #}
+                  <div class="btn-group btn-group-sm mt-2" role="group" aria-label="Actions Administrateur">
+                    <a href="{{ url_for('edit_document', doc_id=doc.id) }}" class="btn btn-outline-warning">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-pencil-square" viewBox="0 0 16 16"><path d="M15.502 1.94a.5.5 0 0 1 0 .706L14.459 3.69l-2-2L13.502.646a.5.5 0 0 1 .707 0l1.293 1.293zm-1.75 2.456-2-2L4.939 9.21a.5.5 0 0 0-.121.196l-.805 2.414a.25.25 0 0 0 .316.316l2.414-.805a.5.5 0 0 0 .196-.12l6.813-6.814z"/><path fill-rule="evenodd" d="M1 13.5A1.5 1.5 0 0 0 2.5 15h11a1.5 1.5 0 0 0 1.5-1.5v-6a.5.5 0 0 0-1 0v6a.5.5 0 0 1-.5.5h-11a.5.5 0 0 1-.5-.5v-11a.5.5 0 0 1 .5-.5H9a.5.5 0 0 0 0-1H2.5A1.5 1.5 0 0 0 1 2.5z"/></svg> Modifier
+                    </a>
+                    {# Le bouton Supprimer est dans un formulaire POST #}
+                    <form method="POST" action="{{ url_for('delete_document', doc_id=doc.id) }}" class="d-inline" onsubmit="return confirm('ATTENTION : Supprimer définitivement {{ doc.title }} et ses fichiers ?');">
+                        {# Note: Pas besoin de btn-group ici car form est inline #}
+                        <button type="submit" class="btn btn-outline-danger">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-trash3-fill" viewBox="0 0 16 16"><path d="M11 1.5v1h3.5a.5.5 0 0 1 0 1h-.538l-.853 10.66A2 2 0 0 1 11.115 16h-6.23a2 2 0 0 1-1.994-1.84L2.038 3.5H1.5a.5.5 0 0 1 0-1h3.5v-1a.5.5 0 0 1 .5-.5h4a.5.5 0 0 1 .5.5M4.5 5.029l.5 8.5a.5.5 0 1 0 .998-.06l-.5-8.5a.5.5 0 1 0-.998.06m3 .058l.5 8.5a.5.5 0 1 0 .998-.06l-.5-8.5a.5.5 0 1 0-.998.06m3-.002l.5 8.5a.5.5 0 1 0 .998-.06l-.5-8.5a.5.5 0 1 0-.998.06z"/></svg> Suppr.
+                        </button>
+                    </form>
+                  </div>
+                {% endif %}
+                {# === FIN BOUTONS ADMIN === #}
+            </div>
+          </div>
+          {# Footer avec statut physique #}
+          {% if doc.is_physical %}
+          <div class="card-footer bg-transparent border-top-0"> {# Rendu un peu plus léger #}
+             <small class="text-muted">Dispo. Physique : {{ doc.status.capitalize() }}</small>
+          </div>
+          {% endif %}
+        </div>
+      </div>
+    {% else %}
+      <div class="col-12"> {# Prend toute la largeur si pas de résultat #}
+        <p class="text-center text-muted mt-5">
+            {% if request.args.get('q') %}
+                Aucun document trouvé correspondant à votre recherche "<strong>{{ request.args.get('q') }}</strong>". <a href="{{ url_for('catalogue') }}">Voir tout le catalogue</a>.
+            {% else %}
+                Le catalogue est vide pour le moment.
+            {% endif %}
+        </p>
+      </div>
+    {% endfor %}
+  </div>
+
+{% endblock %}

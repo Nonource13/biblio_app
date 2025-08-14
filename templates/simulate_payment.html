@@ -1,0 +1,55 @@
+<!-- templates/simulate_payment.html (Version avec Formulaire Carte) -->
+{% extends 'base.html' %}
+{% block title %}Finaliser l'Inscription - Paiement{% endblock %} {# Retiré 'Simulation' du titre ici #}
+{% block content %}
+  <h2>Finaliser l'Inscription - Informations de Paiement</h2>
+  <p>Utilisateur : <strong>{{ username }}</strong></p>
+  <p>Abonnement choisi : <strong>{{ plan_details.name }}</strong></p>
+  <p>Montant à régler : <strong>{{ plan_details.price }} €</strong></p>
+
+  {# === AVERTISSEMENT TRÈS IMPORTANT === #}
+  <div class="alert alert-danger mt-4" role="alert">
+    <h4 class="alert-heading">Simulation Uniquement !</h4>
+    <p>Ceci est une **simulation** de processus de paiement. **N'ENTREZ PAS VOS VRAIES INFORMATIONS BANCAIRES.** Les données saisies ci-dessous ne seront pas stockées ni traitées de manière sécurisée.</p>
+    <hr>
+    <p class="mb-0">Cliquez sur "Payer" pour activer votre compte à des fins de démonstration.</p>
+  </div>
+  {# === FIN AVERTISSEMENT === #}
+
+  {# Formulaire de paiement simulé #}
+  <form method="POST" action="{{ url_for('process_simulated_payment') }}" class="mt-4 border p-4 rounded">
+    {# Champs cachés essentiels pour le backend #}
+    <input type="hidden" name="user_id" value="{{ user_id }}">
+    <input type="hidden" name="subscription_type" value="{{ subscription_type }}">
+
+    <div class="mb-3">
+      <label for="cardholder_name" class="form-label">Nom sur la carte</label>
+      <input type="text" class="form-control" id="cardholder_name" name="cardholder_name" required placeholder="Ex: Jean Dupont">
+    </div>
+
+    <div class="mb-3">
+      <label for="card_number" class="form-label">Numéro de carte</label>
+      <input type="text" class="form-control" id="card_number" name="card_number" required inputmode="numeric" pattern="\d{13,16}" title="Entrez 13 à 16 chiffres" placeholder="•••• •••• •••• ••••">
+    </div>
+
+    <div class="row">
+      <div class="col-md-7 mb-3">
+        <label for="expiry_date" class="form-label">Date d'expiration</label>
+        <input type="text" class="form-control" id="expiry_date" name="expiry_date" required pattern="(0[1-9]|1[0-2])\/?([0-9]{2}|[0-9]{4})" title="Format MM/AA ou MM/AAAA" placeholder="MM/AA">
+      </div>
+      <div class="col-md-5 mb-3">
+        <label for="cvc" class="form-label">CVC/CVV</label>
+        <input type="text" class="form-control" id="cvc" name="cvc" required inputmode="numeric" pattern="\d{3,4}" title="Entrez 3 ou 4 chiffres" placeholder="•••">
+      </div>
+    </div>
+
+    {# Le bouton unique de soumission #}
+    <button type="submit" class="btn btn-success w-100">
+      Payer {{ plan_details.price }} € (Simulation)
+    </button>
+  </form>
+
+  <hr>
+  <a href="{{ url_for('index') }}" class="btn btn-secondary btn-sm">Annuler l'inscription</a>
+
+{% endblock %}

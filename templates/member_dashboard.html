@@ -1,0 +1,101 @@
+<!-- templates/member_dashboard.html -->
+{% extends 'base.html' %}
+{% block title %}Tableau de Bord Membre{% endblock %}
+{% block content %}
+  <h1>Tableau de Bord Membre</h1>
+  <p>Bienvenue, {{ session.get('username', 'Membre') }} !</p>
+  <a href="{{ url_for('catalogue') }}" class="btn btn-info mb-4">Explorer le Catalogue</a>
+
+  {# === SECTION : MES EMPRUNTS NUMÉRIQUES ACTIFS === #}
+  <div class="card mb-4">
+    <div class="card-header">
+      <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-cloud-download me-1" viewBox="0 0 16 16">
+        <path d="M4.406 1.342A5.53 5.53 0 0 1 8 0c2.69 0 4.923 2 5.166 4.579C14.758 4.804 16 6.137 16 7.773 16 9.569 14.502 11 12.687 11H10a.5.5 0 0 1 0-1h2.688C13.979 10 15 8.988 15 7.773c0-1.216-1.02-2.228-2.313-2.228h-.5v-.5C12.188 2.825 10.328 1 8 1a4.53 4.53 0 0 0-4.242 3.228zm-.3 6.108a.5.5 0 0 1 .447.277l2 4.5a.5.5 0 0 1-.894.448l-2-4.5a.5.5 0 0 1 .277-.447zM10.5 9.793a.5.5 0 0 1 .707 0l2 2a.5.5 0 0 1-.707.707l-2-2a.5.5 0 0 1 0-.707zM5 12.293V15.5a.5.5 0 0 1-1 0v-3.207L3.354 12.646a.5.5 0 1 1-.708-.707l2-2a.5.5 0 0 1 .708 0l2 2a.5.5 0 0 1-.708.707L5 12.293z"/>
+      </svg>
+      Mes Emprunts Numériques Actifs
+    </div>
+    <div class="card-body">
+      {% if loans %}
+        <ul class="list-group list-group-flush">
+          {% for loan in loans %}
+            <li class="list-group-item d-flex flex-column flex-md-row justify-content-between align-items-md-center p-3">
+              {# Infos Doc #}
+              <div class="mb-2 mb-md-0">
+                <strong>{{ loan.document.title }}</strong>
+                {% if loan.document.author %}<small class="text-muted d-block">par {{ loan.document.author }}</small>{% endif %}
+                <small class="text-muted d-block">
+                  Retour prévu le : <span class="fw-bold">{{ loan.due_date.strftime('%d/%m/%Y') }}</span>
+                  {% set days_left = (loan.due_date.date() - today_date).days %}
+                  <span class="badge bg-{{ 'danger' if days_left < 3 else ('warning text-dark' if days_left < 7 else 'info') }} ms-1">
+                    J{{ '-' if days_left >=0 else '' }}{{ days_left if days_left >= 0 else ' dépassé' }}
+                  </span>
+                </small>
+              </div>
+              {# Boutons Action Prêt #}
+              <div class="mt-2 mt-md-0 text-md-end"> {# Alignement droite sur md et + #}
+                <a href="{{ url_for('access_document', loan_id=loan.id) }}" class="btn btn-primary btn-sm me-1 mb-1" target="_blank">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-eye-fill me-1" viewBox="0 0 16 16">
+                    <path d="M10.5 8a2.5 2.5 0 1 1-5 0 2.5 2.5 0 0 1 5 0"/>
+                    <path d="M0 8s3-5.5 8-5.5S16 8 16 8s-3 5.5-8 5.5S0 8 0 8m8 3.5a3.5 3.5 0 1 0 0-7 3.5 3.5 0 0 0 0 7"/>
+                  </svg> Lire
+                </a>
+                <form method="POST" action="{{ url_for('return_digital', loan_id=loan.id) }}" class="d-inline-block mb-1">
+                   <button type="submit" class="btn btn-secondary btn-sm" onclick="return confirm('Retourner ce document numérique ?');">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-arrow-return-left me-1" viewBox="0 0 16 16">
+                      <path fill-rule="evenodd" d="M14.5 1.5a.5.5 0 0 1 .5.5v4.8a2.5 2.5 0 0 1-2.5 2.5H2.707l3.347 3.346a.5.5 0 0 1-.708.708l-4.2-4.2a.5.5 0 0 1 0-.708l4-4a.5.5 0 1 1 .708.708L2.707 8.3H12.5A1.5 1.5 0 0 0 14 6.8V2a.5.5 0 0 1 .5-.5"/>
+                    </svg> Retourner
+                   </button>
+                 </form>
+              </div>
+            </li>
+          {% endfor %}
+        </ul>
+      {% else %}
+        <p class="text-center text-muted">Aucun emprunt numérique actif.</p>
+      {% endif %}
+    </div>
+  </div>
+  {# === FIN SECTION EMPRUNTS NUMÉRIQUES === #}
+
+
+  {# === SECTION : MES RÉSERVATIONS PHYSIQUES ACTIVES === #}
+  <div class="card">
+    <div class="card-header">
+      <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-bookmark-check-fill me-2" viewBox="0 0 16 16">
+        <path fill-rule="evenodd" d="M2 15.5V2a2 2 0 0 1 2-2h8a2 2 0 0 1 2 2v13.5a.5.5 0 0 1-.74.439L8 13.069l-5.26 2.87A.5.5 0 0 1 2 15.5m8.854-9.646a.5.5 0 0 0-.708-.708L7.5 7.793 6.354 6.646a.5.5 0 1 0-.708.708l1.5 1.5a.5.5 0 0 0 .708 0z"/>
+      </svg>
+      Mes Réservations Physiques Actives
+    </div>
+    <div class="card-body">
+      {% if reservations %}
+        <ul class="list-group list-group-flush">
+          {% for resa in reservations %}
+            <li class="list-group-item d-flex flex-column flex-md-row justify-content-between align-items-md-center p-3">
+              {# Infos Doc #}
+              <div class="mb-2 mb-md-0">
+                <strong>{{ resa.document.title }}</strong>
+                {% if resa.document.author %}<small class="text-muted d-block">par {{ resa.document.author }}</small>{% endif %}
+                <small class="text-muted d-block">Réservé le : {{ resa.reservation_date.strftime('%d/%m/%Y %H:%M') }}</small>
+              </div>
+              {# Boutons Action Réservation #}
+              <div class="mt-2 mt-md-0 text-md-end">
+                 <span class="badge bg-success rounded-pill me-2 mb-1">Réservé</span>
+                 <form method="POST" action="{{ url_for('cancel_reservation', reservation_id=resa.id) }}" class="d-inline-block mb-1">
+                   <button type="submit" class="btn btn-warning btn-sm" onclick="return confirm('Annuler cette réservation ?');">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-x-circle-fill me-1" viewBox="0 0 16 16">
+                      <path d="M16 8A8 8 0 1 1 0 8a8 8 0 0 1 16 0M5.354 4.646a.5.5 0 1 0-.708.708L7.293 8l-2.647 2.646a.5.5 0 0 0 .708.708L8 8.707l2.646 2.647a.5.5 0 0 0 .708-.708L8.707 8l2.647-2.646a.5.5 0 0 0-.708-.708L8 7.293z"/>
+                    </svg> Annuler
+                   </button>
+                 </form>
+              </div>
+            </li>
+          {% endfor %}
+        </ul>
+      {% else %}
+        <p class="text-center text-muted">Aucune réservation physique active.</p>
+      {% endif %}
+    </div>
+  </div>
+  {# === FIN SECTION RÉSERVATIONS PHYSIQUES === #}
+
+{% endblock %}

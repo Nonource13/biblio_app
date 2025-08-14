@@ -1,0 +1,94 @@
+<!-- templates/librarian_dashboard.html -->
+{% extends 'base.html' %}
+{% block title %}Tableau de Bord Bibliothécaire{% endblock %}
+{% block content %}
+  <h1>Tableau de Bord Bibliothécaire</h1>
+  <p>Bienvenue, {{ session.get('username', 'Bibliothécaire') }} !</p>
+  <div class="card mt-4">
+    <div class="card-header">
+      Ajouter un Nouveau Document
+    </div>
+    <div class="card-body">
+      <form method="POST" action="{{ url_for('add_document') }}" id="add-doc-form" enctype="multipart/form-data">
+        {# --- Champs texte --- #}
+        <div class="mb-3">
+          <label for="title" class="form-label">Titre</label>
+          <input type="text" class="form-control" id="title" name="title" required>
+        </div>
+        <div class="mb-3">
+          <label for="author" class="form-label">Auteur</label>
+          <input type="text" class="form-control" id="author" name="author">
+        </div>
+        <div class="mb-3">
+          <label for="summary" class="form-label">Résumé</label>
+          <textarea class="form-control" id="summary" name="summary" rows="3"></textarea>
+        </div>
+
+        {# --- Choix des formats --- #}
+        <div class="row mb-3">
+          <label class="form-label col-12">Formats Disponibles :</label> {# Label pour la ligne entière #}
+          <div class="col-md-6">
+             <div class="form-check mb-2"> {# Ajout marge basse #}
+              <input class="form-check-input" type="checkbox" value="y" id="is_physical" name="is_physical" checked>
+              <label class="form-check-label" for="is_physical">
+                Version Physique
+              </label>
+            </div>
+             <div class="form-check">
+              <input class="form-check-input" type="checkbox" value="y" id="is_digital" name="is_digital" onchange="toggleFilePathInput()">
+              <label class="form-check-label" for="is_digital">
+                Version Numérique (PDF)
+              </label>
+            </div>
+          </div>
+          {# --- Champ Nom Fichier (Conditionnel) --- #}
+          <div class="col-md-6" id="file-path-group" style="display: none;">
+            <label for="file_path" class="form-label">Nom du Fichier PDF</label>
+            <input type="text" class="form-control" id="file_path" name="file_path">
+            <div class="form-text">
+              Entrez nom exact (ex: mon_livre.pdf) présent dans uploads/pdfs. Requis si "Numérique" est cochée.
+            </div>
+          </div>
+        </div>
+
+        {# --- AJOUT : Champ Upload Image Couverture --- #}
+        <div class="mb-3">
+          <label for="cover_image" class="form-label">Image de Couverture (Optionnel)</label>
+          <input class="form-control" type="file" id="cover_image" name="cover_image" accept="image/*">
+           <div class="form-text">Formats acceptés : png, jpg, jpeg, gif, webp.</div>
+        </div>
+        {# --- FIN AJOUT Upload Image --- #}
+
+        {# --- Catégories (Simulation) --- #}
+         <div class="mb-3">
+            <label for="categories" class="form-label">Catégories/Sujets (Info)</label>
+            <input type="text" class="form-control" id="categories" name="categories" placeholder="Non sauvegardé">
+            <div class="form-text">
+                <strong>Suggestion IA (Simu):</strong>
+                <span class="badge bg-secondary">Genre1</span> <span class="badge bg-secondary">Genre2</span>
+            </div>
+        </div>
+
+        <button type="submit" class="btn btn-primary">Ajouter Document</button>
+      </form>
+    </div> {# Fin card-body #}
+  </div> {# Fin card #}
+
+  {# --- Script JS --- #}
+  <script>
+    function toggleFilePathInput() {
+      const isDigitalCheckbox = document.getElementById('is_digital');
+      const filePathGroup = document.getElementById('file-path-group');
+      const filePathInput = document.getElementById('file_path');
+      if (isDigitalCheckbox.checked) {
+        filePathGroup.style.display = 'block';
+        filePathInput.required = true;
+      } else {
+        filePathGroup.style.display = 'none';
+        filePathInput.required = false;
+        filePathInput.value = '';
+      }
+    }
+    document.addEventListener('DOMContentLoaded', toggleFilePathInput);
+  </script>
+{% endblock %}

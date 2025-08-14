@@ -1,0 +1,129 @@
+<!-- templates/document_detail.html (Version avec Image et Colonnes) -->
+{% extends 'base.html' %}
+
+{% block title %}{{ doc.title }} - BiblioTech IA{% endblock %}
+
+{% block content %}
+  {# --- Structure en deux colonnes --- #}
+  <div class="row mb-4"> {# Ajout marge basse à la ligne #}
+
+    {# === Colonne pour l'image === #}
+    <div class="col-md-4 mb-3 mb-md-0">
+      {% if doc.cover_image_filename %}
+        {# Affiche l'image si elle existe #}
+        <img src="{{ url_for('static', filename='uploads/covers/' + doc.cover_image_filename) }}"
+             class="img-fluid rounded shadow-sm w-100" {# w-100 pour occuper la colonne #}
+             alt="Couverture de {{ doc.title }}"
+             style="max-height: 500px; object-fit: contain;"> {# Limite hauteur, ajuste l'image #}
+      {% else %}
+        {# Affiche le placeholder sinon #}
+        <img src="{{ url_for('static', filename='images/placeholder_cover.png') }}"
+             class="img-fluid rounded w-100"
+             alt="Pas de couverture disponible"
+             style="max-height: 500px; object-fit: contain; opacity: 0.6;">
+      {% endif %}
+    </div>
+    {# === Fin Colonne Image === #}
+
+
+    {# === Colonne pour les détails et actions === #}
+    <div class="col-md-8">
+      {# Bouton Retour Catalogue #}
+      <a href="{{ url_for('catalogue') }}" class="btn btn-outline-secondary btn-sm mb-3">« Retour au Catalogue</a>
+
+      {# Titre et Auteur #}
+      <h1>{{ doc.title }}</h1>
+      <p class="lead">par {{ doc.author if doc.author else 'Auteur inconnu' }}</p>
+
+      {# Carte avec Résumé, Formats, Statut, Actions #}
+      <div class="card shadow-sm"> {# Légère ombre #}
+        <div class="card-body">
+          {# Résumé #}
+          <h5 class="card-title">Résumé</h5>
+          <p class="card-text">{{ doc.summary if doc.summary else 'Pas de résumé disponible.' }}</p>
+          <hr>
+
+          {# Formats Disponibles #}
+          <p><strong>Formats Disponibles :</strong>
+            {% if doc.is_physical %}<span class="badge bg-secondary me-1">Physique</span>{% endif %}
+            {% if doc.is_digital %}<span class="badge bg-primary">Numérique (PDF)</span>{% endif %}
+          </p>
+
+          {# Disponibilité Physique (si applicable) #}
+          {% if doc.is_physical %}
+            <p><strong>Disponibilité Physique :</strong> <span class="badge bg-{{ 'success' if doc.status == 'disponible' else ('warning text-dark' if doc.status == 'emprunte' else 'secondary') }}">{{ doc.status.capitalize() }}</span></p>
+          {% endif %}
+
+          {# === ACTIONS UTILISATEUR (MEMBRE) === #}
+          {% if session.get('user_role') == 'membre' %}
+            <div class="mt-3 border-top pt-3">
+              <h6 class="card-subtitle mb-3 text-muted">Actions Membre</h6> {# Utilisation h6 pour hiérarchie #}
+
+              {# Bouton Emprunt Numérique #}
+              {% if doc.is_digital and doc.file_path %}
+                {% set current_loan = current_user.loans | selectattr('document_id', 'equalto', doc.id) | selectattr('status', 'equalto', 'active') | first %}
+                {% if not current_loan %}
+                  <form method="POST" action="{{ url_for('borrow_digital', doc_id=doc.id) }}" class="d-inline-block me-2 mb-2">
+                      <button type="submit" class="btn btn-primary">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-cloud-download me-1" viewBox="0 0 16 16"> <path d="M4.406 1.342A5.53 5.53 0 0 1 8 0c2.69 0 4.923 2 5.166 4.579C14.758 4.804 16 6.137 16 7.773 16 9.569 14.502 11 12.687 11H10a.5.5 0 0 1 0-1h2.688C13.979 10 15 8.988 15 7.773c0-1.216-1.02-2.228-2.313-2.228h-.5v-.5C12.188 2.825 10.328 1 8 1a4.53 4.53 0 0 0-4.242 3.228zm-.3 6.108a.5.5 0 0 1 .447.277l2 4.5a.5.5 0 0 1-.894.448l-2-4.5a.5.5 0 0 1 .277-.447zM10.5 9.793a.5.5 0 0 1 .707 0l2 2a.5.5 0 0 1-.707.707l-2-2a.5.5 0 0 1 0-.707zM5 12.293V15.5a.5.5 0 0 1-1 0v-3.207L3.354 12.646a.5.5 0 1 1-.708-.707l2-2a.5.5 0 0 1 .708 0l2 2a.5.5 0 0 1-.708.707L5 12.293z"/> </svg>
+                        Emprunter (Numérique)
+                      </button>
+                  </form>
+                {% else %}
+                   <button class="btn btn-outline-primary disabled d-inline-block me-2 mb-2" aria-disabled="true">Déjà Emprunté (Num)</button>
+                {% endif %}
+              {% elif doc.is_digital %}
+                 <span class="badge bg-danger d-inline-block me-2 mb-2">Fichier numérique indisponible</span>
+              {% endif %}
+
+              {# Bouton(s) pour Physique #}
+              {% if doc.is_physical %}
+                {% if doc.status == 'disponible' %}
+                  <span class="badge bg-success d-inline-block me-2 mb-2">Disponible en bibliothèque</span>
+                {% elif doc.status == 'emprunte' %}
+                   {% set current_resa = current_user.reservations | selectattr('document_id', 'equalto', doc.id) | selectattr('status', 'equalto', 'active') | first %}
+                   {% if not current_resa %}
+                       <form method="POST" action="{{ url_for('reserve_document', doc_id=doc.id) }}" class="d-inline-block me-2 mb-2">
+                          <button type="submit" class="btn btn-success">
+                             <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-bookmark-plus me-1" viewBox="0 0 16 16"><path d="M2 2a2 2 0 0 1 2-2h8a2 2 0 0 1 2 2v13.5a.5.5 0 0 1-.777.416L8 13.101l-5.223 2.815A.5.5 0 0 1 2 15.5zm2-1a1 1 0 0 0-1 1v12.566l4.723-2.482a.5.5 0 0 1 .554 0L13 14.566V2a1 1 0 0 0-1-1z"/><path d="M8 4a.5.5 0 0 1 .5.5V6H10a.5.5 0 0 1 0 1H8.5v1.5a.5.5 0 0 1-1 0V7H6a.5.5 0 0 1 0-1h1.5V4.5A.5.5 0 0 1 8 4"/></svg>
+                             Réserver (Physique)
+                          </button>
+                       </form>
+                   {% else %}
+                       <button class="btn btn-outline-success disabled d-inline-block me-2 mb-2" aria-disabled="true">Déjà Réservé (Phys)</button>
+                   {% endif %}
+                {% endif %}
+              {% endif %}
+
+              {# Bouton Paiement Amende (Simulation) #}
+              <form method="POST" action="{{ url_for('pay_fine_simulated', doc_id=doc.id) }}" class="d-inline-block mb-2">
+                   <button type="submit" class="btn btn-danger btn-sm">
+                     <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-credit-card me-1" viewBox="0 0 16 16"><path d="M0 4a2 2 0 0 1 2-2h12a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2zm2-1a1 1 0 0 0-1 1v1h14V4a1 1 0 0 0-1-1zm13 4H1v5a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1z"/><path d="M2 10a1 1 0 0 1 1-1h1a1 1 0 0 1 1 1v1a1 1 0 0 1-1 1H3a1 1 0 0 1-1-1z"/></svg>
+                     Payer Amende (Simulé)
+                   </button>
+               </form>
+            </div>
+          {% endif %}
+          {# === FIN ACTIONS UTILISATEUR === #}
+        </div> {# Fin card-body #}
+      </div> {# Fin card #}
+    </div> {# Fin col-md-8 #}
+    {# === Fin Colonne Détails/Actions === #}
+  </div> {# Fin row #}
+  {# === Fin Structure Colonnes === #}
+
+
+  {# === Suggestions IA (Section inchangée) === #}
+  <div class="card">
+    <div class="card-header">Suggestions Similaires (Simulation IA)</div>
+    <div class="card-body">
+      <p>Basé sur ce document, vous pourriez aussi aimer :</p>
+      <ul>
+        <li>Autre Livre Génial (Simulé)</li>
+        <li>Un Classique Intéressant (Simulé)</li>
+      </ul>
+    </div>
+  </div>
+  {# === Fin Suggestions === #}
+
+{% endblock %}

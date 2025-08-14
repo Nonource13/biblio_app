@@ -1,0 +1,170 @@
+<!-- templates/manager_dashboard.html -->
+{% extends 'base.html' %}
+{% block title %}Tableau de Bord Gérant{% endblock %}
+{% block content %}
+  <h1>Tableau de Bord Gérant</h1>
+  <p>Bienvenue, {{ session.get('username', 'Gérant') }} !</p>
+
+  {# === SECTION RAPPORT D'ACTIVITÉ RÉEL === #}
+  <div class="card mt-4 mb-4">
+    <div class="card-header">
+      Rapport d'Activité
+    </div>
+    <div class="card-body">
+      <h5 class="card-title">Statistiques Générales :</h5>
+      {# Utilisation d'une liste de définitions pour la clarté #}
+      <dl class="row">
+        <dt class="col-sm-4">Total Documents</dt>
+        <dd class="col-sm-8">{{ stats.get('total_documents', 'N/A') }}</dd>
+
+        <dt class="col-sm-4">Documents Physiques Disponibles</dt>
+        <dd class="col-sm-8">{{ stats.get('physical_available', 'N/A') }}</dd>
+
+        <dt class="col-sm-4">Documents Physiques Empruntés</dt>
+        <dd class="col-sm-8">{{ stats.get('physical_borrowed', 'N/A') }}</dd>
+
+        <dt class="col-sm-4">Documents Numériques (PDF)</dt>
+        <dd class="col-sm-8">{{ stats.get('digital_documents', 'N/A') }}</dd>
+
+        <dt class="col-sm-4">Prêts Numériques Actifs</dt>
+        <dd class="col-sm-8">{{ stats.get('active_digital_loans', 'N/A') }}</dd>
+
+        <dt class="col-sm-4">Réservations Physiques Actives</dt>
+        <dd class="col-sm-8">{{ stats.get('active_reservations', 'N/A') }}</dd>
+
+        <dt class="col-sm-4">Total Membres Inscrits</dt>
+        <dd class="col-sm-8">{{ stats.get('total_members', 'N/A') }}</dd>
+
+        <dt class="col-sm-4">Membres avec Abonnement Actif</dt>
+        <dd class="col-sm-8">{{ stats.get('active_members', 'N/A') }}</dd>
+
+        <dt class="col-sm-4">Total Personnel (Biblio/Préposé/Gérant)</dt>
+        <dd class="col-sm-8">{{ stats.get('total_staff', 'N/A') }}</dd>
+      </dl>
+
+      {# Affichage simple des documents les plus prêtés numériquement #}
+      {% if stats.get('most_loaned_digital') %}
+      <h5 class="card-title mt-3">Top 5 Prêts Numériques Actifs :</h5>
+      <ol>
+        {% for title, count in stats.most_loaned_digital %}
+          <li>{{ title }} ({{ count }} prêt(s) actif(s))</li>
+        {% endfor %}
+      </ol>
+      {% endif %}
+
+      {# <a href="#" class="btn btn-secondary btn-sm mt-3 disabled">Générer Rapport Détaillé (Non implémenté)</a> #}
+    </div>
+  </div>
+  {# === FIN SECTION RAPPORT === #}
+
+
+  {# === SECTION LISTE DES BIBLIOTHÉCAIRES === #}
+  <div class="card mt-4 mb-4">
+      <div class="card-header">Gestion des Bibliothécaires</div>
+      <div class="card-body">
+          <h5 class="card-title">Liste des Bibliothécaires</h5>
+          {% if librarians %}
+              <div class="table-responsive">
+                  <table class="table table-striped table-hover table-sm">
+                      <thead>
+                          <tr>
+                              <th>ID</th>
+                              <th>Nom d'utilisateur</th>
+                              <th>Email</th>
+                              <th>Actions</th>
+                          </tr>
+                      </thead>
+                      <tbody>
+                          {% for user in librarians %}
+                          <tr>
+                              <td>{{ user.id }}</td>
+                              <td>{{ user.username }}</td>
+                              <td>{{ user.email or '-' }}</td>
+                              <td>
+                                  {# Formulaire de suppression #}
+                                  <form method="POST" action="{{ url_for('delete_user', user_id=user.id) }}" class="d-inline" onsubmit="return confirm('Supprimer définitivement le bibliothécaire \'{{ user.username }}\' ?');">
+                                      <button type="submit" class="btn btn-danger btn-sm" title="Supprimer">
+                                          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-trash3-fill" viewBox="0 0 16 16">...</svg> {# Icône Trash #}
+                                      </button>
+                                  </form>
+                                  {# Autres actions possibles ici (ex: Modifier mot de passe) #}
+                              </td>
+                          </tr>
+                          {% endfor %}
+                      </tbody>
+                  </table>
+              </div>
+          {% else %}
+              <p>Aucun bibliothécaire trouvé.</p>
+          {% endif %}
+
+          {# --- Formulaire Ajout Bibliothécaire (déplacé ici ou gardé séparé) --- #}
+          <hr>
+          <h5 class="card-title">Ajouter un Bibliothécaire</h5>
+           <form method="POST" action="{{ url_for('create_staff_user') }}">
+            <div class="row">
+              <div class="col-md-6 mb-3"><label for="staff_username" class="form-label">Nom d'utilisateur</label><input type="text" class="form-control form-control-sm" id="staff_username" name="username" required></div>
+              <div class="col-md-6 mb-3"><label for="staff_password" class="form-label">Mot de passe Initial</label><input type="password" class="form-control form-control-sm" id="staff_password" name="password" required></div>
+            </div>
+             <div class="mb-3"><label for="staff_email" class="form-label">Email (Optionnel)</label><input type="email" class="form-control form-control-sm" id="staff_email" name="email"></div>
+             <input type="hidden" name="role" value="bibliothecaire"> {# Rôle forcé #}
+            <button type="submit" class="btn btn-success btn-sm">Créer Compte Bibliothécaire</button>
+          </form>
+          {# --- Fin Formulaire Ajout --- #}
+      </div>
+  </div>
+  {# === FIN SECTION BIBLIOTHÉCAIRES === #}
+
+
+  {# === SECTION LISTE DES MEMBRES === #}
+  <div class="card mt-4 mb-4">
+      <div class="card-header">Gestion des Membres</div>
+      <div class="card-body">
+          <h5 class="card-title">Liste des Membres</h5>
+          {% if members %}
+              <div class="table-responsive">
+                  <table class="table table-striped table-hover table-sm">
+                      <thead>
+                          <tr>
+                              <th>ID</th>
+                              <th>Nom d'utilisateur</th>
+                              <th>Email</th>
+                              <th>Statut Abonnement</th>
+                              <th>Fin Abonnement</th>
+                              <th>Actions</th>
+                          </tr>
+                      </thead>
+                      <tbody>
+                          {% for user in members %}
+                          <tr>
+                              <td>{{ user.id }}</td>
+                              <td>{{ user.username }}</td>
+                              <td>{{ user.email or '-' }}</td>
+                              <td>
+                                  <span class="badge bg-{{ 'success' if user.subscription_status == 'active' else ('warning' if user.subscription_status == 'pending' else 'secondary') }}">
+                                      {{ user.subscription_status.capitalize() }}
+                                  </span>
+                              </td>
+                              <td>{{ user.subscription_end_date.strftime('%d/%m/%Y') if user.subscription_end_date else '-' }}</td>
+                              <td>
+                                  {# Formulaire de suppression #}
+                                   <form method="POST" action="{{ url_for('delete_user', user_id=user.id) }}" class="d-inline" onsubmit="return confirm('Supprimer définitivement le membre \'{{ user.username }}\' et tous ses prêts/réservations ?');">
+                                      <button type="submit" class="btn btn-danger btn-sm" title="Supprimer">
+                                          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-person-x-fill" viewBox="0 0 16 16">...</svg> {# Icône Person Delete #}
+                                      </button>
+                                  </form>
+                                  {# Autres actions : Voir prêts, Modifier abo, etc. #}
+                              </td>
+                          </tr>
+                          {% endfor %}
+                      </tbody>
+                  </table>
+              </div>
+          {% else %}
+              <p>Aucun membre trouvé.</p>
+          {% endif %}
+      </div>
+  </div>
+  {# === FIN SECTION MEMBRES === #}
+
+{% endblock %}
